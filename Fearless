@@ -1,0 +1,237 @@
+-- FEARLESS CHAT BYPASSER V2.6.0 Lua Script for Roblox
+-- Made for Synapse X, Script-Ware, KRNL, etc.
+
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+local Window = Rayfield:CreateWindow({
+    Name = "FEARLESS CHAT BYPASSER | V2.6.0",
+    LoadingTitle = "Fearless Hub",
+    LoadingSubtitle = "Loading Bypasser...",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "FearlessBypasser",
+        FileName = "Config"
+    },
+    Discord = {
+        Enabled = true,
+        Invite = "invitelink", -- Replace with actual Discord invite
+        RememberJoins = true
+    },
+    KeySystem = false, -- Set to true if you want key system
+    KeySettings = {
+        Title = "Fearless Hub",
+        Subtitle = "Key System",
+        Note = "Join Discord for key",
+        FileName = "FearlessKey",
+        SaveKey = true,
+        GrabKeyFromSite = false,
+        Key = "FearlessHUB"
+    }
+})
+
+-- Main Tab
+local MainTab = Window:CreateTab("Home", 4483362458) -- Home icon
+
+local AutoBypassSection = MainTab:CreateSection("Auto Bypass")
+local AutoToggle = MainTab:CreateToggle({
+    Name = "Enable Auto Bypass",
+    CurrentValue = false,
+    Flag = "AutoBypassToggle",
+    Callback = function(Value)
+        if Value then
+            Rayfield:Notify({
+                Title = "Auto Bypass Enabled",
+                Content = "Chat bypassing is now active",
+                Duration = 3,
+                Image = 4483362458
+            })
+            -- Auto bypass logic here
+        else
+            Rayfield:Notify({
+                Title = "Auto Bypass Disabled",
+                Content = "Chat bypassing is now inactive",
+                Duration = 3,
+                Image = 4483362458
+            })
+        end
+    end,
+})
+
+local BypassWordsSection = MainTab:CreateSection("Bypass Words")
+local BypassList = {
+    "kill",
+    "die",
+    "hack",
+    "exploit",
+    -- Add more words as needed
+}
+
+local BypassDropdown = MainTab:CreateDropdown({
+    Name = "Select Word to Bypass",
+    Options = BypassList,
+    CurrentOption = "kill",
+    Flag = "WordDropdown",
+    Callback = function(Option)
+        Rayfield:Notify({
+            Title = "Word Selected",
+            Content = "Bypassing: " .. Option,
+            Duration = 2,
+            Image = 4483362458
+        })
+    end,
+})
+
+local CustomWord = MainTab:CreateInput({
+    Name = "Custom Word",
+    PlaceholderText = "Enter word to bypass",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        if Text ~= "" then
+            table.insert(BypassList, Text)
+            Rayfield:Notify({
+                Title = "Word Added",
+                Content = "Added: " .. Text,
+                Duration = 2,
+                Image = 4483362458
+            })
+        end
+    end,
+})
+
+-- Plugins Tab
+local PluginsTab = Window:CreateTab("Plugins", 6034287594) -- Plugin icon
+
+local PluginSection = PluginsTab:CreateSection("Available Plugins")
+local Plugin1 = PluginsTab:CreateToggle({
+    Name = "Advanced Filtering",
+    CurrentValue = false,
+    Flag = "Plugin1",
+    Callback = function(Value)
+        -- Plugin 1 logic
+    end,
+})
+
+local Plugin2 = PluginsTab:CreateToggle({
+    Name = "Word Replacement",
+    CurrentValue = false,
+    Flag = "Plugin2",
+    Callback = function(Value)
+        -- Plugin 2 logic
+    end,
+})
+
+local Plugin3 = PluginsTab:CreateToggle({
+    Name = "Auto-Responder",
+    CurrentValue = false,
+    Flag = "Plugin3",
+    Callback = function(Value)
+        -- Plugin 3 logic
+    end,
+})
+
+-- Transistor Tab
+local TransistorTab = Window:CreateTab("Transistor", 7733765358) -- Settings icon
+
+local SettingsSection = TransistorTab:CreateSection("Settings")
+local LanguageDropdown = TransistorTab:CreateDropdown({
+    Name = "Language",
+    Options = {"English", "Spanish", "French", "German", "Russian", "Portuguese"},
+    CurrentOption = "English",
+    Flag = "LanguageDropdown",
+    Callback = function(Option)
+        Rayfield:Notify({
+            Title = "Language Changed",
+            Content = "Set to: " .. Option,
+            Duration = 2,
+            Image = 4483362458
+        })
+    end,
+})
+
+local NotificationsToggle = TransistorTab:CreateToggle({
+    Name = "Enable Notifications",
+    CurrentValue = true,
+    Flag = "NotificationsToggle",
+    Callback = function(Value)
+        -- Notification settings logic
+    end,
+})
+
+-- Impactors Tab
+local ImpactorsTab = Window:CreateTab("Impactors!", 5965056918) -- Sword icon
+
+local ImpactorSection = ImpactorsTab:CreateSection("Impactor Tools")
+local Impactor1 = ImpactorsTab:CreateButton({
+    Name = "Load Universal Impactor",
+    Callback = function()
+        Rayfield:Notify({
+            Title = "Impactor Loading",
+            Content = "Loading universal impactor...",
+            Duration = 3,
+            Image = 5965056918
+        })
+        -- Load impactor script
+    end,
+})
+
+local Impactor2 = ImpactorsTab:CreateButton({
+    Name = "Load Game-Specific Impactor",
+    Callback = function()
+        Rayfield:Notify({
+            Title = "Game Impactor",
+            Content = "Loading game-specific impactor...",
+            Duration = 3,
+            Image = 5965056918
+        })
+    end,
+})
+
+-- User Info Section
+local UserSection = Window:CreateSection("User Info")
+local PlayerName = game:GetService("Players").LocalPlayer.Name
+
+Window:CreateLabel("Welcome, @" .. PlayerName)
+Window:CreateLabel("Change Language to 'English' for script to work perfectly")
+Window:CreateLabel("For suggestions/problems, contact: Discord @heartcard.vi")
+
+-- Bypass Function
+local function BypassWord(word)
+    -- Implement your bypass logic here
+    local bypassed = string.gsub(word, "a", "@")
+    bypassed = string.gsub(bypassed, "i", "1")
+    bypassed = string.gsub(bypassed, "e", "3")
+    bypassed = string.gsub(bypassed, "o", "0")
+    return bypassed
+end
+
+-- Auto Bypass Chat Hook
+local ChatService = game:GetService("TextChatService")
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+
+local function SetupChatBypass()
+    if ChatService then
+        local Channel = ChatService.TextChannels.RBXGeneral
+        if Channel then
+            Channel.OnIncomingMessage = function(message)
+                if Rayfield.Flags["AutoBypassToggle"] then
+                    -- Process message with bypass
+                    local processedText = BypassWord(message.Text)
+                    -- Modify message here
+                    return message
+                end
+                return message
+            end
+        end
+    end
+end
+
+-- Initialize
+Rayfield:Notify({
+    Title = "FEARLESS CHAT BYPASSER",
+    Content = "Successfully loaded! Version 2.6.0",
+    Duration = 5,
+    Image = 4483362458
+})
+
+SetupChatBypass()
