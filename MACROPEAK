@@ -1,0 +1,658 @@
+-- MACROPEAK | Flick FPS Script
+-- Made By @LuaDev
+-- Key: LIB201
+
+-- Services
+local Players = game:GetService("Players")
+local RunService = game:GetService("RunService")
+local Workspace = game:GetService("Workspace")
+local Lighting = game:GetService("Lighting")
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
+
+-- Variables
+local LocalPlayer = Players.LocalPlayer
+local Camera = Workspace.CurrentCamera
+local Mouse = LocalPlayer:GetMouse()
+
+-- Key System
+local correctKey = "LIB201"
+local keyInput = nil
+
+-- Create key input GUI
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Parent = game:GetService("CoreGui")
+
+local Frame = Instance.new("Frame")
+Frame.Size = UDim2.new(0, 350, 0, 200)
+Frame.Position = UDim2.new(0.5, -175, 0.5, -100)
+Frame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+Frame.BorderSizePixel = 0
+Frame.Active = true
+Frame.Draggable = true
+Frame.Parent = ScreenGui
+
+local UICorner = Instance.new("UICorner")
+UICorner.CornerRadius = UDim.new(0, 8)
+UICorner.Parent = Frame
+
+local Title = Instance.new("TextLabel")
+Title.Size = UDim2.new(1, 0, 0, 50)
+Title.Position = UDim2.new(0, 0, 0, 0)
+Title.BackgroundColor3 = Color3.fromRGB(45, 45, 60)
+Title.Text = "MACROPEAK | Flick FPS"
+Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+Title.TextSize = 20
+Title.Font = Enum.Font.GothamBold
+Title.Parent = Frame
+
+local Subtitle = Instance.new("TextLabel")
+Subtitle.Size = UDim2.new(1, 0, 0, 30)
+Subtitle.Position = UDim2.new(0, 0, 0, 50)
+Subtitle.BackgroundTransparency = 1
+Subtitle.Text = "Made By @LuaDev"
+Subtitle.TextColor3 = Color3.fromRGB(200, 200, 200)
+Subtitle.TextSize = 14
+Subtitle.Font = Enum.Font.Gotham
+Subtitle.Parent = Frame
+
+local InputBox = Instance.new("TextBox")
+InputBox.Size = UDim2.new(0.8, 0, 0, 40)
+InputBox.Position = UDim2.new(0.1, 0, 0.5, -20)
+InputBox.BackgroundColor3 = Color3.fromRGB(50, 50, 65)
+InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+InputBox.PlaceholderText = "Enter Key..."
+InputBox.Text = ""
+InputBox.TextSize = 18
+InputBox.Font = Enum.Font.Gotham
+InputBox.ClearTextOnFocus = false
+InputBox.Parent = Frame
+
+local SubmitButton = Instance.new("TextButton")
+SubmitButton.Size = UDim2.new(0.6, 0, 0, 40)
+SubmitButton.Position = UDim2.new(0.2, 0, 0.8, -20)
+SubmitButton.BackgroundColor3 = Color3.fromRGB(80, 120, 255)
+SubmitButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+SubmitButton.Text = "SUBMIT KEY"
+SubmitButton.TextSize = 16
+SubmitButton.Font = Enum.Font.GothamBold
+SubmitButton.Parent = Frame
+
+local UICorner2 = Instance.new("UICorner")
+UICorner2.CornerRadius = UDim.new(0, 6)
+UICorner2.Parent = SubmitButton
+
+-- Key check function
+local function checkKey()
+    if InputBox.Text == correctKey then
+        ScreenGui:Destroy()
+        return true
+    else
+        InputBox.Text = ""
+        InputBox.PlaceholderText = "Wrong Key! Try Again"
+        return false
+    end
+end
+
+SubmitButton.MouseButton1Click:Connect(checkKey)
+InputBox.FocusLost:Connect(function(enterPressed)
+    if enterPressed then
+        checkKey()
+    end
+end)
+
+-- Wait for correct key
+repeat
+    wait()
+until not ScreenGui.Parent
+
+-- Load Rayfield after key verification
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
+
+-- Create Window
+local Window = Rayfield:CreateWindow({
+    Name = "MACROPEAK | Flick",
+    LoadingTitle = "Loading MACROPEAK...",
+    LoadingSubtitle = "Made By @LuaDev",
+    ConfigurationSaving = {
+        Enabled = true,
+        FolderName = "MACROPEAK",
+        FileName = "FlickConfig"
+    }
+})
+
+-- FOV Circle Drawing
+local FOVCircle = Drawing.new("Circle")
+FOVCircle.Visible = false
+FOVCircle.Radius = 80
+FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+FOVCircle.Thickness = 2
+FOVCircle.Filled = false
+FOVCircle.Transparency = 1
+
+-- Rainbow color function
+local rainbowColor = 0
+local function getRainbowColor()
+    rainbowColor = (rainbowColor + 1) % 360
+    return Color3.fromHSV(rainbowColor/360, 1, 1)
+end
+
+-- Get closest player function
+local function getClosestPlayer(fov)
+    local closestPlayer = nil
+    local closestDistance = fov or math.huge
+    
+    for _, player in pairs(Players:GetPlayers()) do
+        if player ~= LocalPlayer and player.Character and player.Character:FindFirstChild("Humanoid") and player.Character.Humanoid.Health > 0 then
+            local character = player.Character
+            local humanoidRootPart = character:FindFirstChild("HumanoidRootPart") or character:FindFirstChild("Torso")
+            
+            if humanoidRootPart then
+                local screenPoint, onScreen = Camera:WorldToViewportPoint(humanoidRootPart.Position)
+                
+                if onScreen then
+                    local mousePos = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+                    local playerPos = Vector2.new(screenPoint.X, screenPoint.Y)
+                    local distance = (mousePos - playerPos).Magnitude
+                    
+                    if distance < closestDistance then
+                        closestPlayer = player
+                        closestDistance = distance
+                    end
+                end
+            end
+        end
+    end
+    
+    return closestPlayer
+end
+
+-- Silent Aim Function
+local silentAimEnabled = false
+local silentAimFOV = 100
+
+-- Aimbot Function
+local aimbotEnabled = false
+local prediction = 0.14
+local teamCheck = true
+local deadCheck = true
+
+-- ESP Variables
+local espEnabled = false
+local espBoxes = {}
+local espLines = {}
+local teamCheckESP = true
+
+-- Create ESP box
+local function createESPBox(player)
+    local drawing = Drawing.new("Square")
+    drawing.Visible = false
+    drawing.Color = Color3.fromRGB(255, 255, 255)
+    drawing.Thickness = 2
+    drawing.Filled = false
+    drawing.ZIndex = 1
+    espBoxes[player] = drawing
+    
+    local line = Drawing.new("Line")
+    line.Visible = false
+    line.Color = Color3.fromRGB(255, 255, 255)
+    line.Thickness = 2
+    espLines[player] = line
+end
+
+-- Update ESP
+local function updateESP()
+    for player, box in pairs(espBoxes) do
+        if player and player.Character and player.Character:FindFirstChild("HumanoidRootPart") then
+            local rootPart = player.Character.HumanoidRootPart
+            local position, onScreen = Camera:WorldToViewportPoint(rootPart.Position)
+            
+            if onScreen then
+                local size = Vector2.new(2000 / position.Z, 3000 / position.Z)
+                box.Size = size
+                box.Position = Vector2.new(position.X - size.X/2, position.Y - size.Y/2)
+                box.Visible = espEnabled and (not teamCheckESP or player.Team ~= LocalPlayer.Team)
+                
+                -- ESP line from center to player
+                local line = espLines[player]
+                if line then
+                    line.From = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+                    line.To = Vector2.new(position.X, position.Y)
+                    line.Visible = box.Visible
+                end
+            else
+                box.Visible = false
+                if espLines[player] then
+                    espLines[player].Visible = false
+                end
+            end
+        else
+            box.Visible = false
+            if espLines[player] then
+                espLines[player].Visible = false
+            end
+        end
+    end
+end
+
+-- Initialize ESP for all players
+for _, player in pairs(Players:GetPlayers()) do
+    if player ~= LocalPlayer then
+        createESPBox(player)
+    end
+end
+
+-- Player added event
+Players.PlayerAdded:Connect(function(player)
+    createESPBox(player)
+end)
+
+-- Player removed event
+Players.PlayerRemoving:Connect(function(player)
+    if espBoxes[player] then
+        espBoxes[player]:Remove()
+        espBoxes[player] = nil
+    end
+    if espLines[player] then
+        espLines[player]:Remove()
+        espLines[player] = nil
+    end
+end)
+
+-- Silent Aim Tab
+local SilentAimTab = Window:CreateTab("Silent Aim", 13079117154)
+
+local SilentAimSection = SilentAimTab:CreateSection("Silent Aim Settings")
+
+local SilentAimToggle = SilentAimTab:CreateToggle({
+    Name = "Enable Silent Aim",
+    CurrentValue = false,
+    Flag = "SilentAimToggle",
+    Callback = function(Value)
+        silentAimEnabled = Value
+    end,
+})
+
+local SilentAimFOVSlider = SilentAimTab:CreateSlider({
+    Name = "Silent Aim FOV",
+    Range = {1, 500},
+    Increment = 1,
+    Suffix = "studs",
+    CurrentValue = 100,
+    Flag = "SilentAimFOV",
+    Callback = function(Value)
+        silentAimFOV = Value
+    end,
+})
+
+-- Hook Mouse.Hit for Silent Aim
+local oldMouseHit
+oldMouseHit = hookmetamethod(game, "__namecall", function(self, ...)
+    local method = getnamecallmethod()
+    local args = {...}
+    
+    if silentAimEnabled and self == Mouse and method == "Hit" then
+        local closestPlayer = getClosestPlayer(silentAimFOV)
+        if closestPlayer and closestPlayer.Character then
+            local targetPart = closestPlayer.Character:FindFirstChild("Head") or 
+                              closestPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if targetPart then
+                return CFrame.new(Camera.CFrame.Position, targetPart.Position)
+            end
+        end
+    end
+    
+    return oldMouseHit(self, unpack(args))
+end)
+
+-- Aimbot Tab
+local AimbotTab = Window:CreateTab("Aimbot", 6031075938)
+
+local AimbotSection = AimbotTab:CreateSection("Aimbot Settings")
+
+local AimbotToggle = AimbotTab:CreateToggle({
+    Name = "Enable Aimbot",
+    CurrentValue = false,
+    Flag = "AimbotToggle",
+    Callback = function(Value)
+        aimbotEnabled = Value
+    end,
+})
+
+local PredictionSlider = AimbotTab:CreateSlider({
+    Name = "Prediction",
+    Range = {0.1, 2.0},
+    Increment = 0.1,
+    Suffix = "sec",
+    CurrentValue = 0.14,
+    Flag = "Prediction",
+    Callback = function(Value)
+        prediction = Value
+    end,
+})
+
+local TeamCheckToggle = AimbotTab:CreateToggle({
+    Name = "Team Check",
+    CurrentValue = true,
+    Flag = "TeamCheck",
+    Callback = function(Value)
+        teamCheck = Value
+    end,
+})
+
+local DeadCheckToggle = AimbotTab:CreateToggle({
+    Name = "Dead Check",
+    CurrentValue = true,
+    Flag = "DeadCheck",
+    Callback = function(Value)
+        deadCheck = Value
+    end,
+})
+
+local FOVSection = AimbotTab:CreateSection("FOV Settings")
+
+local VisibleFOVToggle = AimbotTab:CreateToggle({
+    Name = "Show FOV Circle",
+    CurrentValue = true,
+    Flag = "ShowFOV",
+    Callback = function(Value)
+        FOVCircle.Visible = Value
+    end,
+})
+
+local FOVSizeSlider = AimbotTab:CreateSlider({
+    Name = "FOV Size",
+    Range = {10, 500},
+    Increment = 5,
+    Suffix = "studs",
+    CurrentValue = 80,
+    Flag = "FOVSize",
+    Callback = function(Value)
+        FOVCircle.Radius = Value
+    end,
+})
+
+local RainbowFOVToggle = AimbotTab:CreateToggle({
+    Name = "Rainbow FOV",
+    CurrentValue = false,
+    Flag = "RainbowFOV",
+    Callback = function(Value)
+        -- Handled in render loop
+    end,
+})
+
+-- ESP Tab
+local ESPTab = Window:CreateTab("ESP", 6031280881)
+
+local ESPSection = ESPTab:CreateSection("ESP Settings")
+
+local ESPToggle = ESPTab:CreateToggle({
+    Name = "Enable ESP",
+    CurrentValue = false,
+    Flag = "ESPToggle",
+    Callback = function(Value)
+        espEnabled = Value
+        updateESP()
+    end,
+})
+
+local TeamCheckerToggle = ESPTab:CreateToggle({
+    Name = "Team Checker",
+    CurrentValue = true,
+    Flag = "TeamChecker",
+    Callback = function(Value)
+        teamCheckESP = Value
+        updateESP()
+    end,
+})
+
+local ESPLinesToggle = ESPTab:CreateToggle({
+    Name = "ESP Lines",
+    CurrentValue = true,
+    Flag = "ESPLines",
+    Callback = function(Value)
+        -- Lines are always drawn, just toggle visibility through ESP toggle
+    end,
+})
+
+local ESPBoxesToggle = ESPTab:CreateToggle({
+    Name = "ESP Boxes",
+    CurrentValue = true,
+    Flag = "ESPBoxes",
+    Callback = function(Value)
+        -- Boxes are always drawn, just toggle visibility through ESP toggle
+    end,
+})
+
+-- Triggerbot Tab
+local TriggerbotTab = Window:CreateTab("Triggerbot", 6031304514)
+
+local TriggerbotSection = TriggerbotTab:CreateSection("Triggerbot Settings")
+
+local triggerbotEnabled = false
+local instantReaction = true
+
+local TriggerbotToggle = TriggerbotTab:CreateToggle({
+    Name = "Enable Triggerbot",
+    CurrentValue = false,
+    Flag = "TriggerbotToggle",
+    Callback = function(Value)
+        triggerbotEnabled = Value
+    end,
+})
+
+local InstantReactionToggle = TriggerbotTab:CreateToggle({
+    Name = "Instant Reaction",
+    CurrentValue = true,
+    Flag = "InstantReaction",
+    Callback = function(Value)
+        instantReaction = Value
+    end,
+})
+
+-- Movement Tab
+local MovementTab = Window:CreateTab("Movement", 6031075940)
+
+local MovementSection = MovementTab:CreateSection("Movement Settings")
+
+local speedEnabled = false
+local speedMultiplier = 2
+local originalWalkSpeed
+
+local SpeedToggle = MovementTab:CreateToggle({
+    Name = "Speed Hack",
+    CurrentValue = false,
+    Flag = "SpeedToggle",
+    Callback = function(Value)
+        speedEnabled = Value
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            if Value then
+                originalWalkSpeed = LocalPlayer.Character.Humanoid.WalkSpeed
+                LocalPlayer.Character.Humanoid.WalkSpeed = originalWalkSpeed * speedMultiplier
+            else
+                if originalWalkSpeed then
+                    LocalPlayer.Character.Humanoid.WalkSpeed = originalWalkSpeed
+                end
+            end
+        end
+    end,
+})
+
+local SpeedSlider = MovementTab:CreateSlider({
+    Name = "Speed Multiplier",
+    Range = {1, 10},
+    Increment = 0.1,
+    Suffix = "x",
+    CurrentValue = 2,
+    Flag = "SpeedMultiplier",
+    Callback = function(Value)
+        speedMultiplier = Value
+        if speedEnabled and LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            if originalWalkSpeed then
+                LocalPlayer.Character.Humanoid.WalkSpeed = originalWalkSpeed * Value
+            end
+        end
+    end,
+})
+
+local infiniteJumpEnabled = false
+
+local InfiniteJumpToggle = MovementTab:CreateToggle({
+    Name = "Infinite Jump",
+    CurrentValue = false,
+    Flag = "InfiniteJump",
+    Callback = function(Value)
+        infiniteJumpEnabled = Value
+    end,
+})
+
+-- Visuals Tab
+local VisualsTab = Window:CreateTab("Visuals", 6031068426)
+
+local VisualsSection = VisualsTab:CreateSection("Visual Settings")
+
+local RemoveFogToggle = VisualsTab:CreateToggle({
+    Name = "Remove Fog",
+    CurrentValue = false,
+    Flag = "RemoveFog",
+    Callback = function(Value)
+        if Value then
+            Lighting.FogEnd = 1000000
+        else
+            Lighting.FogEnd = 1000
+        end
+    end,
+})
+
+local RemoveAtmosphereToggle = VisualsTab:CreateToggle({
+    Name = "Remove Atmosphere",
+    CurrentValue = false,
+    Flag = "RemoveAtmosphere",
+    Callback = function(Value)
+        if Value then
+            Lighting.Atmosphere.Density = 0
+            Lighting.Atmosphere.Offset = 999999
+        else
+            Lighting.Atmosphere.Density = 0.5
+            Lighting.Atmosphere.Offset = 0
+        end
+    end,
+})
+
+local RemoveTreesToggle = VisualsTab:CreateToggle({
+    Name = "Remove Trees",
+    CurrentValue = false,
+    Flag = "RemoveTrees",
+    Callback = function(Value)
+        if Value then
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("Part") and obj.Name:find("Tree") then
+                    obj.Transparency = 1
+                    obj.CanCollide = false
+                end
+            end
+        else
+            for _, obj in pairs(Workspace:GetDescendants()) do
+                if obj:IsA("Part") and obj.Name:find("Tree") then
+                    obj.Transparency = 0
+                    obj.CanCollide = true
+                end
+            end
+        end
+    end,
+})
+
+local ContrastSlider = VisualsTab:CreateSlider({
+    Name = "Contrast",
+    Range = {0, 2},
+    Increment = 0.1,
+    Suffix = "x",
+    CurrentValue = 1,
+    Flag = "Contrast",
+    Callback = function(Value)
+        if not Lighting:FindFirstChild("ColorCorrection") then
+            local cc = Instance.new("ColorCorrectionEffect")
+            cc.Parent = Lighting
+        end
+        Lighting.ColorCorrection.Contrast = Value
+    end,
+})
+
+-- Render Stepped Loop
+RunService.RenderStepped:Connect(function()
+    -- Update FOV Circle position
+    FOVCircle.Position = Vector2.new(Camera.ViewportSize.X/2, Camera.ViewportSize.Y/2)
+    
+    -- Rainbow FOV
+    if RainbowFOVToggle.CurrentValue then
+        FOVCircle.Color = getRainbowColor()
+    else
+        FOVCircle.Color = Color3.fromRGB(255, 255, 255)
+    end
+    
+    -- Update ESP
+    updateESP()
+    
+    -- Aimbot Logic
+    if aimbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton2) then
+        local closestPlayer = getClosestPlayer(FOVCircle.Radius)
+        if closestPlayer and closestPlayer.Character then
+            local targetPart = closestPlayer.Character:FindFirstChild("Head") or 
+                              closestPlayer.Character:FindFirstChild("HumanoidRootPart")
+            if targetPart then
+                if teamCheck and closestPlayer.Team == LocalPlayer.Team then return end
+                if deadCheck and closestPlayer.Character.Humanoid.Health <= 0 then return end
+                
+                -- Predict movement
+                local predictedPosition = targetPart.Position + (targetPart.Velocity * prediction)
+                local screenPoint = Camera:WorldToScreenPoint(predictedPosition)
+                
+                if screenPoint then
+                    mousemoverel(screenPoint.X - Mouse.X, screenPoint.Y - Mouse.Y)
+                end
+            end
+        end
+    end
+    
+    -- Triggerbot Logic
+    if triggerbotEnabled and UserInputService:IsMouseButtonPressed(Enum.UserInputType.MouseButton1) then
+        local target = Mouse.Target
+        if target and target.Parent then
+            local player = Players:GetPlayerFromCharacter(target.Parent)
+            if player and player ~= LocalPlayer then
+                if instantReaction then
+                    mouse1click()
+                end
+            end
+        end
+    end
+    
+    -- Infinite Jump
+    if infiniteJumpEnabled and UserInputService:IsKeyDown(Enum.KeyCode.Space) then
+        if LocalPlayer.Character and LocalPlayer.Character:FindFirstChild("Humanoid") then
+            LocalPlayer.Character.Humanoid:ChangeState(Enum.HumanoidStateType.Jumping)
+        end
+    end
+end)
+
+-- Character Added Event
+LocalPlayer.CharacterAdded:Connect(function(character)
+    wait(1)
+    if speedEnabled and character:FindFirstChild("Humanoid") then
+        originalWalkSpeed = character.Humanoid.WalkSpeed
+        character.Humanoid.WalkSpeed = originalWalkSpeed * speedMultiplier
+    end
+end)
+
+-- Load Notification
+Rayfield:Notify({
+    Title = "MACROPEAK | Flick FPS",
+    Content = "Successfully loaded! Key: LIB201\nAll features are now active.",
+    Duration = 5,
+    Image = 6031075938
+})
+
+-- Script Info
+Window:CreateLabel("MACROPEAK | Flick FPS v1.0")
+Window:CreateLabel("Made By @LuaDev")
+Window:CreateLabel("Key: LIB201 (Activated)")
